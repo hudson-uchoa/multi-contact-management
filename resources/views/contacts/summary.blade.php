@@ -21,7 +21,7 @@
                 <tbody>
                     @foreach($summary as $row)
                         <tr>
-                            <td class="text-center">+{{ $row->country_code }}</td>
+                            <td class="text-center">{{ $row->country_code }}</td>
                             <td class="text-center">{{ $row->total }}</td>
                         </tr>
                     @endforeach

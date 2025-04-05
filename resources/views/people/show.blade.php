@@ -60,7 +60,7 @@
                     <tbody>
                         @foreach ($person->contacts as $contact)
                             <tr>
-                                <td class="text-center">+{{ $contact->country_code }}</td>
+                                <td class="text-center">{{ $contact->country_code }}</td>
                                 <td class="text-center">{{ $contact->number }}</td>
                                 <td class="text-center">
                                     <a href="{{ route('contacts.show',  $contact) }}" class="btn btn-info btn-sm">👁️ View</a>
