@@ -30,7 +30,16 @@ class PersonController extends Controller
      */
     public function store(StorePersonRequest $request)
     {
-        Person::create($request->validated());
+
+        $person = Person::withTrashed()->where('email', $request->email)->first();
+
+        if ($person && $person->trashed()) {
+            $person->restore();
+            $person->update($request->validated());
+        }else{
+            Person::create($request->validated());
+        }
+
 
         return redirect()->route('people.index')->with('success', 'Person has been created successfully!');
     }
