@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePersonRequest;
 use App\Http\Requests\UpdatePersonRequest;
 use App\Models\Person;
-use Illuminate\Support\Facades\Http;
 
 class PersonController extends Controller
 {
@@ -23,7 +22,7 @@ class PersonController extends Controller
      */
     public function create()
     {
-        //
+        return view('people.form');
     }
 
     /**
@@ -31,22 +30,9 @@ class PersonController extends Controller
      */
     public function store(StorePersonRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|min:5',
-            'email' => 'required|email|unique:people,email',
-        ]);
+        Person::create($request->validated());
 
-        $response = Http::withoutRedirecting()->get('https://app.pixelencounter.com/api/basic/monsters/random');
-
-        $avatarUrl = $response->header('Location');
-
-        Person::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'avatar_url' => $avatarUrl,
-        ]);
-
-        return redirect()->route('people.index')->with('success', 'Person created succeffuly!');
+        return redirect()->route('people.index')->with('success', 'Person has been created successfully!');
     }
 
     /**
@@ -54,7 +40,7 @@ class PersonController extends Controller
      */
     public function show(Person $person)
     {
-        //
+        return view('people.show', compact('person'));
     }
 
     /**
@@ -62,7 +48,7 @@ class PersonController extends Controller
      */
     public function edit(Person $person)
     {
-        //
+        return view('people.form', compact('person'));
     }
 
     /**
@@ -70,7 +56,11 @@ class PersonController extends Controller
      */
     public function update(UpdatePersonRequest $request, Person $person)
     {
-        //
+        $person->update($request->validated());
+
+        return redirect()
+            ->route('people.index')
+            ->with('success', 'Person has been updated successfully!');
     }
 
     /**
@@ -78,6 +68,14 @@ class PersonController extends Controller
      */
     public function destroy(Person $person)
     {
-        //
+        try {
+            $person->delete();
+
+            return redirect()->route('people.index')
+                ->with('success', 'Person has been deleted successfully!');
+        } catch (\Exception $e) {
+            return redirect()->route('people.index')
+                ->with('error', 'Failed to delete the person.');
+        }
     }
 }
