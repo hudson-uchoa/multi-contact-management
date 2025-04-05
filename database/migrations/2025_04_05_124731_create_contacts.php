@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('country_code', 5);
             $table->string('number', 15);
-            $table->foreignId('people_id')->references('id')->on('peoples')->onDelete('cascade');
+            $table->foreignId('people_id')->constrained()->onDelete('cascade');
             $table->timestamps();
 
             $table->unique(['country_code', 'number']);
