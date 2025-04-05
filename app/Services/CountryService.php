@@ -54,6 +54,23 @@ class CountryService implements CountryServiceInterface
 
             } catch (\Exception $e) {
                 Log::error('CountryService Error: ' . $e->getMessage());
+
+                $fallback = storage_path('app/countries.json');
+                if (file_exists($fallback)) {
+                    $json = json_decode(file_get_contents($fallback), true);
+
+                    return collect($json)
+                        ->filter(fn($c) => isset($c['idd']['root'], $c['idd']['suffixes']) && !empty($c['idd']['suffixes']))
+                        ->map(fn($country) => [
+                            'name' => $country['name']['common'] ?? '',
+                            'code' => $country['idd']['root'] . $country['idd']['suffixes'][0],
+                        ])
+                        ->filter(fn($c) => !empty($c['name']) && !empty($c['code']))
+                        ->sortBy('name')
+                        ->values()
+                        ->toArray();
+                }
+
                 return [];
             }
         });
