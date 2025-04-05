@@ -2,9 +2,8 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
-use Log;
+use Illuminate\Support\Facades\Log;
 
 class CountryService implements CountryServiceInterface
 {
@@ -12,15 +11,29 @@ class CountryService implements CountryServiceInterface
     {
         return Cache::remember('country_calling_codes', 86400, function () {
             try {
-                $response = Http::timeout(10)
-                    ->withoutVerifying()
-                    ->get('https://restcountries.com/v3.1/all?fields=name,idd');
+                $url = 'https://restcountries.com/v3.1/all?fields=name,idd';
 
-                if (!$response->successful()) {
-                    throw new \Exception('Request failed with status: ' . $response->status());
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 40);
+
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $curlError = curl_error($ch);
+                curl_close($ch);
+
+                if ($response === false || $httpCode !== 200) {
+                    throw new \Exception("cURL request failed: HTTP $httpCode - $curlError");
                 }
 
-                $data = collect($response->json())
+                $json = json_decode($response, true);
+
+                if (!is_array($json)) {
+                    throw new \Exception("Invalid JSON received");
+                }
+
+                $data = collect($json)
                     ->filter(fn($c) => isset($c['idd']['root'], $c['idd']['suffixes']) && !empty($c['idd']['suffixes']))
                     ->map(function ($country) {
                         return [
@@ -40,7 +53,7 @@ class CountryService implements CountryServiceInterface
                 return $data;
 
             } catch (\Exception $e) {
-                Log::error($e->getMessage());
+                Log::error('CountryService Error: ' . $e->getMessage());
                 return [];
             }
         });
